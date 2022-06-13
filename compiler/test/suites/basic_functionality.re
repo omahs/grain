@@ -356,6 +356,6 @@ describe("basic functionality", ({test, testSkip}) => {
     ~config_fn=smallestFileConfig,
     "smallest_grain_program",
     "",
-    4768,
+    4590,
   );
 });

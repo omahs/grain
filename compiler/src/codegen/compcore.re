@@ -1511,6 +1511,7 @@ let allocate_byte_like_from_buffer = (wasm_mod, env, buf, tag, label) => {
           ),
           Expression.Const.make(wasm_mod, const_int32(0)),
           Expression.Const.make(wasm_mod, const_int32(data_size)),
+          grain_memory,
         ),
         get_swap(),
       ],
@@ -3627,10 +3628,6 @@ let compile_wasm_module = (~env=?, ~name=?, prog) => {
   );
   validate_module(~name?, wasm_mod);
 
-  switch (Config.profile^) {
-  | Some(Release) => Optimize_mod.optimize(wasm_mod)
-  | None => ()
-  };
   wasm_mod;
 };
 
