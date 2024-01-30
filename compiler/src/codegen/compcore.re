@@ -3628,6 +3628,8 @@ let compile_wasm_module = (~env=?, ~name=?, prog) => {
   );
   validate_module(~name?, wasm_mod);
 
+  // TODO(#1997): Re-enable per-module Binaryen optimizations
+
   wasm_mod;
 };
 
