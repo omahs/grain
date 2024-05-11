@@ -328,15 +328,22 @@ let option_conv = ((prsr, prntr)) => (
 );
 
 type profile =
+  | Debug
   | Release;
+
+let profile_name = profile =>
+  switch (profile) {
+  | Debug => "debug"
+  | Release => "release"
+  };
 
 let profile =
   opt(
     ~doc="Set a compilation profile.",
     ~names=["profile"],
-    ~conv=option_conv(Cmdliner.Arg.enum([("release", Release)])),
+    ~conv=Cmdliner.Arg.enum([("debug", Debug), ("release", Release)]),
     ~digestable=Digestable,
-    None,
+    Debug,
   );
 
 let default_memory_base = 0x400;

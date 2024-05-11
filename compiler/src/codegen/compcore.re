@@ -3594,8 +3594,8 @@ let compile_wasm_module =
   validate_module(~name?, wasm_mod);
 
   switch (Config.profile^) {
-  | Some(Release) => Optimize_mod.optimize(wasm_mod)
-  | None => ()
+  | Debug => ()
+  | Release => Optimize_mod.optimize(wasm_mod)
   };
   wasm_mod;
 };
