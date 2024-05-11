@@ -24,7 +24,6 @@ type compilation_state = {
   cstate_desc: compilation_state_desc,
   cstate_filename: option(string),
   cstate_object_outfile: option(string),
-  cstate_wasm_outfile: option(string),
 };
 
 type compilation_action =
@@ -235,7 +234,6 @@ let compile_wasi_polyfill = () => {
       let cstate = {
         cstate_desc: Initial(InputFile(file)),
         cstate_filename: Some(file),
-        cstate_wasm_outfile: Some(default_wasm_filename(file)),
         cstate_object_outfile: Some(default_object_filename(file)),
       };
       ignore(compile_resume(~hook=stop_after_object_emitted, cstate));
@@ -259,8 +257,7 @@ let compile_string = (~hook=?, ~name=?, ~outfile=?, str) => {
   let cstate = {
     cstate_desc: Initial(InputString(str)),
     cstate_filename: name,
-    cstate_wasm_outfile: outfile,
-    cstate_object_outfile: Option.map(default_object_filename, outfile),
+    cstate_object_outfile: outfile,
   };
   Grain_utils.Config.preserve_all_configs(() =>
     compile_resume(~hook?, cstate)
@@ -272,8 +269,7 @@ let compile_file = (~hook=?, ~outfile=?, filename) => {
   let cstate = {
     cstate_desc: Initial(InputFile(filename)),
     cstate_filename: Some(filename),
-    cstate_wasm_outfile: outfile,
-    cstate_object_outfile: Option.map(default_object_filename, outfile),
+    cstate_object_outfile: outfile,
   };
   Grain_utils.Config.preserve_all_configs(() =>
     compile_resume(~hook?, cstate)
