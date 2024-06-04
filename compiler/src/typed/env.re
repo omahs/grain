@@ -730,10 +730,16 @@ let check_consistency = ps =>
       ((name, crc)) => {
         let resolved_file_name =
           Module_resolution.locate_object_file(
-            ~base_dir=Filepath.String.dirname(ps.ps_filename),
+            ~base_dir=
+              Fp.dirName(Fp.absoluteCurrentPlatformExn(ps.ps_filename)),
             name,
           );
-        Consistbl.check(crc_units, resolved_file_name, crc, ps.ps_filename);
+        Consistbl.check(
+          crc_units,
+          Fp.toString(resolved_file_name),
+          crc,
+          ps.ps_filename,
+        );
       },
       ps.ps_crcs,
     )
@@ -796,6 +802,7 @@ module Persistent_signature = {
     ref((~loc=Location.dummy_loc, unit_name) => {
       switch (Module_resolution.locate_object_file(~loc, unit_name)) {
       | filename =>
+        let filename = Fp.toString(filename);
         let ret = {filename, cmi: Module_resolution.read_file_cmi(filename)};
         Some(ret);
       | exception Not_found => None
@@ -2247,7 +2254,7 @@ let imports = () => {
   let imported_units = StringSet.elements(imported_units^);
   let resolved_units =
     List.map(
-      unit => Module_resolution.locate_object_file(unit),
+      unit => Fp.toString(Module_resolution.locate_object_file(unit)),
       imported_units,
     );
   List.map2(

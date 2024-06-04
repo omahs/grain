@@ -327,6 +327,36 @@ let option_conv = ((prsr, prntr)) => (
     | Some(x) => prntr(ppf, x),
 );
 
+let file_conv =
+  Cmdliner.Arg.(
+    x =>
+      switch (conv_parser(file, x)) {
+      | Ok(d) => `Ok(Filepath.derelativize(Fp.testForPathExn(d)))
+      | Error(`Msg(msg)) => `Error(msg)
+      },
+    (ppf, d) => Format.fprintf(ppf, "%s", Fp.toString(d)),
+  );
+
+let dir_conv =
+  Cmdliner.Arg.(
+    x =>
+      switch (conv_parser(dir, x)) {
+      | Ok(d) => `Ok(Filepath.derelativize(Fp.testForPathExn(d)))
+      | Error(`Msg(msg)) => `Error(msg)
+      },
+    (ppf, d) => Format.fprintf(ppf, "%s", Fp.toString(d)),
+  );
+
+let non_existing_dir_conv =
+  Cmdliner.Arg.(
+    x =>
+      switch (conv_parser(string, x)) {
+      | Ok(d) => `Ok(Filepath.derelativize(Fp.testForPathExn(d)))
+      | Error(`Msg(msg)) => `Error(msg)
+      },
+    (ppf, d) => Format.fprintf(ppf, "%s", Fp.toString(d)),
+  );
+
 type profile =
   | Debug
   | Release;
@@ -360,17 +390,17 @@ let memory_base =
 let project_root =
   opt(
     ~names=["project-root"],
-    ~conv=Cmdliner.Arg.dir,
+    ~conv=dir_conv,
     ~doc="Extra library include directories",
     ~docv="DIR",
     ~digestable=NotDigestable,
-    Sys.getcwd(),
+    Fp.absoluteCurrentPlatformExn(Sys.getcwd()),
   );
 
 let include_dirs =
   opt(
     ~names=["I", "include-dirs"],
-    ~conv=Cmdliner.Arg.(list(dir)),
+    ~conv=Cmdliner.Arg.(list(dir_conv)),
     ~doc="Extra library include directories",
     ~docv="DIR",
     ~digestable=NotDigestable,
@@ -380,7 +410,7 @@ let include_dirs =
 let stdlib_dir =
   opt(
     ~names=["stdlib"],
-    ~conv=option_conv(Cmdliner.Arg.string),
+    ~conv=option_conv(dir_conv),
     ~doc="Path to the standard library (stdlib) directory",
     ~env="GRAIN_STDLIB",
     ~digestable=Digestable,
@@ -390,10 +420,10 @@ let stdlib_dir =
 let target_dir =
   opt(
     ~names=["target-dir"],
-    ~conv=Cmdliner.Arg.string,
+    ~conv=non_existing_dir_conv,
     ~doc="Path to place build artifacts",
     ~digestable=NotDigestable,
-    "target",
+    Filepath.derelativize(Fp.Relative(Fp.relativeExn("target/build"))),
   );
 
 let color_enabled =
@@ -524,7 +554,7 @@ let bulk_memory =
 let wasi_polyfill =
   opt(
     ~names=["wasi-polyfill"],
-    ~conv=option_conv(Cmdliner.Arg.string),
+    ~conv=option_conv(file_conv),
     ~doc="Custom WASI implementation",
     ~digestable=NotDigestable,
     None,
@@ -573,23 +603,8 @@ let with_cli_options = (term: 'a): Cmdliner.Term.t('a) => {
   folded;
 };
 
-let stdlib_directory = (): option(string) =>
-  Option.map(
-    path => Filepath.(to_string(String.derelativize(path))),
-    stdlib_dir^,
-  );
-
-let target_directory = (): string =>
-  Filepath.(to_string(String.derelativize(target_dir^)));
-
-let wasi_polyfill_path = (): option(string) =>
-  Option.map(
-    path => Filepath.(to_string(String.derelativize(path))),
-    wasi_polyfill^,
-  );
-
 let module_search_path = () => {
-  switch (stdlib_directory()) {
+  switch (stdlib_dir^) {
   | Some(x) => include_dirs^ @ [x] /* stdlib goes last */
   | None => include_dirs^
   };
